@@ -1,7 +1,7 @@
 package model
 
 import (
-	"JT808monitor/utils"
+	"Jt808/utils"
 	"bytes"
 )
 
@@ -57,10 +57,37 @@ func (t *TerminalRegisterBody) SetCarLicenseIdentifier(car_license_identifier st
 	return t
 }
 
-func (t *TerminalRegisterBody) getBytes() []byte {
+func (t *TerminalRegisterBody) GetBytes() []byte {
 	var buff = bytes.Buffer{}
 	buff.Write(utils.IntTo2byte(t.province))
-	buff.Write(utils.IntTo2byte(t.province))
-       // 制造商
-	return nil
+	buff.Write(utils.IntTo2byte(t.city))
+	// 制造商ID byte[5]
+	//manufacturer := utils.EncodeCBCDFromString(t.manufacturer)
+
+	buff.Write(rightPadWithZero(5, []byte(t.manufacturer)))
+	// 终端型号 byte[20]
+	buff.Write(rightPadWithZero(20, utils.EncodeCBCDFromString(t.terminal_type)))
+	// 终端ID
+	buff.Write(rightPadWithZero(7, utils.EncodeCBCDFromString(t.terminal_id)))
+	// 车牌颜色
+	buff.Write([]byte{t.car_license_color})
+	// 车牌号
+	if t.car_license_identifier == "" {
+		t.car_license_identifier = "浙A00000"
+	}
+	buff.Write(utils.GetBytesWithGBK(t.car_license_identifier))
+
+	return buff.Bytes()
+}
+
+func rightPadWithZero(length int, buff []byte) []byte {
+	if length <= len(buff) {
+		return buff[:length]
+	}
+	delta := length - len(buff)
+	for i := 0; i < delta; i++ {
+		buff = append(buff, 0x0)
+	}
+
+	return buff
 }
