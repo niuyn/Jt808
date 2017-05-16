@@ -3,7 +3,6 @@ package model
 import (
 	"Jt808/utils"
 	"bytes"
-	"time"
 )
 
 type TerminalGpsBody struct {

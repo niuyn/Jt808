@@ -3,6 +3,7 @@ package JT808
 import (
 	. "JT808/consts"
 	. "JT808/model"
+	"Jt808/utils"
 	"fmt"
 )
 
@@ -11,13 +12,21 @@ type TerminalInfo struct {
 	heartbeat_interval int
 	gps_interval       int
 	terminalGps        TerminalGpsInfo
-	terminalMultiGps   []TerminalGpsInfo
+	terminalBatchGps   TerminalBatchGpsInfo
 	terminalReg        TerminalRegisterBody
 	sequnce            int
+	authcode           string
+	reconnflag         bool
 }
+
 type TerminalGpsInfo struct {
 	terminalGps      TerminalGpsBody
 	terminalGpsExtra TerminalGpsExtraBody
+}
+
+type TerminalBatchGpsInfo struct {
+	terminalBatchGpsInfoType int
+	terminalMultiGps         []TerminalGpsInfo
 }
 
 // 终端注册
@@ -34,7 +43,7 @@ func (dev *TerminalInfo) GenTerminalGpsUp() []byte {
 	gpsBody := dev.terminalGps.terminalGps.GetBytes()
 	if len(gpsBody) == 0 {
 		fmt.Println("time is empty")
-		return ret
+		return []byte{}
 	}
 	gpsBodyExtra := dev.terminalGps.terminalGpsExtra.GetBytes()
 	body := append(gpsBody, gpsBodyExtra...)
@@ -42,19 +51,47 @@ func (dev *TerminalInfo) GenTerminalGpsUp() []byte {
 }
 
 //终端注销
+func (dev *TerminalInfo) GenTerminalHeartbeat() []byte {
+
+	return dev.GenWholeMsg([]byte{}, Msg_Terminal_Heartbeat)
+}
+
+//终端心跳
 func (dev *TerminalInfo) GenTerminalLogout() []byte {
 
-	return nil
+	return dev.GenWholeMsg([]byte{}, Msg_Terminal_Logout)
 }
 
 //终端鉴权
 func (dev *TerminalInfo) GenTerminalAuth() []byte {
-	return nil
+	//消息体
+	body := utils.GetBytesWithGBK(dev.authcode)
+	return dev.GenWholeMsg(body, Msg_Terminal_Auth)
 }
 
 //定量数据批量上传
 func (dev *TerminalInfo) GenTerminalBatchGpsUp() []byte {
-	return nil
+	// 消息体
+	//数据项个数
+	body := []byte{}
+	gpsNum := len(dev.terminalBatchGps.terminalMultiGps)
+	gpsType := dev.terminalBatchGps.terminalBatchGpsInfoType
+	body = append(body, utils.IntTo2byte(gpsNum)...)
+	body = append(body, byte(gpsType))
+	//多个位置数据体
+	batchGps := []byte{}
+	for i := 0; i < gpsNum; i++ {
+		gpsBody := dev.terminalBatchGps.terminalMultiGps[i].terminalGps.GetBytes()
+		gpsBodyExtra := dev.terminalBatchGps.terminalMultiGps[i].terminalGpsExtra.GetBytes()
+		batchGps = append(batchGps, gpsBody...)
+		batchGps = append(batchGps, gpsBodyExtra...)
+	}
+	//获得位置汇报数据体长度
+	length := len(batchGps)
+	body = append(body, utils.IntTo2byte(length)...)
+	body = append(body, batchGps...)
+
+	return dev.GenWholeMsg(body, Msg_Terminal_Gps_Batch_Up)
 }
 
 func (dev *TerminalInfo) GenWholeMsg(body []byte, MsgId int) []byte {
