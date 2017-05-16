@@ -13,6 +13,7 @@ type Session struct {
 }
 type ByteBuff struct {
 	position int
+	capacity int
 	buff     []byte
 }
 
@@ -39,14 +40,22 @@ func (s *Session) Next() {
 		s.Handlers[i](s.Conn)
 	}
 }
-func (s *SimpleTcp) ClearBuff() {
-	s.session.buff.position = 0
+func (s *Session) ClearBuff() {
+	s.buff.position = 0
 }
-func (s *SimpleTcp) PullRemainingBuff() []byte {
-	length := s.session.buff.position
+func (s *Session) PullRemainingBuff() []byte {
+	length := s.buff.position
 	ret := []byte{}
-	ret = append(ret, s.session.buff.buff[0:length]...)
-	s.session.buff.position = 0
+	ret = append(ret, s.buff.buff[0:length]...)
+	s.buff.position = 0
 	return ret
 
+}
+
+func (s *Session) readWithProcol(handlerFunc HandlerFunc, timeout int) []byte {
+	return nil
+}
+
+func (s *Session) read(timeout int) []byte {
+	return nil
 }
