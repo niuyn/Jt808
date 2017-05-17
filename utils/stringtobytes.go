@@ -47,10 +47,21 @@ func EncodeCBCDFromString(str string) []byte {
 	return ret
 
 }
+
+// 获得string 的GBK　编码
 func GetBytesWithGBK(str string) []byte {
 	data, err := ioutil.ReadAll(transform.NewReader(bytes.NewReader([]byte(str)), simplifiedchinese.GBK.NewEncoder()))
 	if err != nil {
 		return nil
 	}
 	return data
+}
+
+func GetStringWithGBK(buffer []byte) string {
+	strBytes, err := ioutil.ReadAll(transform.NewReader(bytes.NewReader(buffer), simplifiedchinese.GBK.NewDecoder()))
+	if err != nil {
+		return ""
+	}
+	return string(strBytes)
+
 }

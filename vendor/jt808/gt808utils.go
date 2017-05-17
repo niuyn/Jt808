@@ -1,4 +1,4 @@
-package JT808
+package jt808
 
 import (
 	//"sync/atomic"
@@ -63,17 +63,24 @@ func currSequence() int {
 func doEscape4Receive(buff []byte) []byte {
 	ret := bytes.Buffer{}
 	ret.WriteByte(0x7e)
-	for i := 0; i < len(buff)-1; i++ {
-		if buff[i] == 0x7d && buff[i+1] == 0x01 {
-			ret.WriteByte(0x7d)
-			i++
-		} else if buff[i] == 0x7d && buff[i+1] == 0x02 {
-			ret.WriteByte(0x7e)
-			i++
-		} else {
+	for i := 0; i < len(buff); i++ {
+		if i+1 >= len(buff) {
 			ret.WriteByte(buff[i])
+
+		} else {
+			if buff[i] == 0x7d && buff[i+1] == 0x01 {
+				ret.WriteByte(0x7d)
+				i++
+			} else if buff[i] == 0x7d && buff[i+1] == 0x02 {
+				ret.WriteByte(0x7e)
+				i++
+			} else {
+				ret.WriteByte(buff[i])
+			}
 		}
+
 	}
+
 	ret.WriteByte(0x7e)
 	return ret.Bytes()
 }

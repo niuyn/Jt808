@@ -14,3 +14,9 @@ func IntTo4byte(value int) []byte {
 	ret[3] = byte(value & 0xFF)
 	return ret
 }
+func Bytes2ToInt(buff []byte) int {
+	if len(buff) != 2 {
+		return 0
+	}
+	return int(buff[0])<<8 | int(buff[1])
+}

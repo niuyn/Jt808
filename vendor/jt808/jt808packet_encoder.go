@@ -1,10 +1,10 @@
-package JT808
+package jt808
 
 import (
-	. "JT808/consts"
-	. "JT808/model"
 	"Jt808/utils"
 	"fmt"
+	. "jt808/consts"
+	. "jt808/model"
 )
 
 type TerminalInfo struct {
@@ -27,6 +27,28 @@ type TerminalGpsInfo struct {
 type TerminalBatchGpsInfo struct {
 	terminalBatchGpsInfoType int
 	terminalMultiGps         []TerminalGpsInfo
+}
+
+func (dev *TerminalInfo) GetAuthCode() string {
+	return dev.authcode
+}
+func (dev *TerminalInfo) GetHeartBeatInterval() int {
+	return dev.heartbeat_interval
+}
+func (dev *TerminalInfo) GetGpsInterval() int {
+	return dev.gps_interval
+}
+func (dev *TerminalInfo) SetGpsInterval(interval int) *TerminalInfo {
+	dev.gps_interval = interval
+	return dev
+}
+func (dev *TerminalInfo) SetHeartBeatInterval(interval int) *TerminalInfo {
+	dev.heartbeat_interval = interval
+	return dev
+}
+func (dev *TerminalInfo) SetImei(imei string) *TerminalInfo {
+	dev.imei = imei
+	return dev
 }
 
 // 终端注册
@@ -116,5 +138,8 @@ func (dev *TerminalInfo) getSequence() int {
 	if dev.sequnce > 0xFFFF {
 		dev.sequnce = 0
 	}
+	return dev.sequnce
+}
+func (dev *TerminalInfo) CurrSequence() int {
 	return dev.sequnce
 }
