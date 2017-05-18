@@ -32,7 +32,6 @@ type Session struct {
 type DecodableHandler struct {
 	hander      HandlerFunc
 	decoder_ret MsgDecoderRet
-	index       int
 }
 type RespInfo struct {
 	respChan     chan []byte
@@ -76,7 +75,7 @@ func (s *Session) SetResp(size int) *Session {
 }
 func (s *Session) Use(hander ...HandlerFunc) {
 	if s.CurHandler == nil {
-		s.CurHandler = &DecodableHandler{hander[0], MsgDecoderRet_NONE}
+		s.CurHandler = &DecodableHandler{hander[0], msgDecoderRet_NONE}
 	}
 	s.Handlers = append(s.Handlers, hander...)
 }
@@ -164,57 +163,38 @@ func (s *Session) Read() error {
 			continue
 		}
 		buffer.position += n
-		// 选择一正确的协议来处理
-		if s.CurHandler.decoder_ret == MsgDecoderRet_OK {
-			n, ret_, isWhole := s.CurHandler.hander.WholePacket(s)
-			if MsgDecoderRet_NEED_DATA == isWhole {
-				continue
-			} else {
-				//ret := s.GetBuffWithLength(length)
-				buffer.position -= n
-				select {
-				case s.recevQuene.respChan <- ret_:
-				default:
-					log.Println("recevice quenue is overflow throw a paket :", hex.EncodeToString(<-s.recevQuene.respChan))
-				}
-			}
-
-		} else if s.CurHandler.decoder_ret == MsgDecoderRet_NOT_OK {
-			if s.CurHandler.index >= len(s.Handlers)-1 {
-				log.Printf("can`t resove the message  : ", hex.EncodeToString(buffer.buff[:buffer.position]))
-				buffer.position = 0
-			} else {
-				for i := s.CurHandler.index; i < len(s.Handlers); i++ {
-					ret := s.Handlers[i].Decodable(s)
-					s.CurHandler.hander = s.Handlers[i]
-					s.CurHandler.decoder_ret = ret
-					s.CurHandler.index = i
-					if ret != MsgDecoderRet_NOT_OK {
-						break
-					}
-
-				}
-
-			}
-
-			// 关链接
-		} else if s.CurHandler.decoder_ret == MsgDecoderRet_NEED_DATA {
-			s.CurHandler.decoder_ret = s.CurHandler.hander.Decodable(s)
-
-		} else {
+		if s.CurHandler.decoder_ret != MsgDecoderRet_OK {
 			for i := 0; i < len(s.Handlers); i++ {
 				ret := s.Handlers[i].Decodable(s)
 				if ret != MsgDecoderRet_NOT_OK {
 					s.CurHandler.hander = s.Handlers[i]
 					s.CurHandler.decoder_ret = ret
-					s.CurHandler.index = i
+					break
 				}
 			}
-			if s.CurHandler.decoder_ret == msgDecoderRet_NONE {
-				log.Printf("can`t resove the message  : ", hex.EncodeToString(buffer.buff[:buffer.position]))
-				buffer.position = 0
-			}
 
+		}
+		if s.CurHandler.decoder_ret == MsgDecoderRet_NEED_DATA {
+			continue
+		}
+		if s.CurHandler.decoder_ret == msgDecoderRet_NONE || s.CurHandler.decoder_ret == MsgDecoderRet_NOT_OK {
+			log.Println("can`t match any handler :", hex.EncodeToString(s.buff.buff[0:n]))
+			// 是否关掉链接
+			buffer.position = 0
+			return errors.New("can`t match any handler ")
+		}
+
+		n, ret_, isWhole := s.CurHandler.hander.WholePacket(s)
+		if MsgDecoderRet_NEED_DATA == isWhole {
+			continue
+		} else {
+			//ret := s.GetBuffWithLength(length)
+			buffer.position -= n
+			select {
+			case s.recevQuene.respChan <- ret_:
+			default:
+				log.Println("recevice quenue is overflow throw a paket :", hex.EncodeToString(<-s.recevQuene.respChan))
+			}
 		}
 
 	}
