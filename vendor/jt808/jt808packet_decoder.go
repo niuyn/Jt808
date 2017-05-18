@@ -3,7 +3,8 @@ package jt808
 import (
 	"Jt808/tcp"
 	"Jt808/utils"
-	"fmt"
+	//	"encoding/hex"
+	//"fmt"
 	. "jt808/consts"
 )
 
@@ -95,7 +96,8 @@ func (dev *TerminalInfo) Decode(buff []byte) {
 	case Cmd_Common_Resp:
 	case Cmd_Terminal_Param_Query:
 	case Cmd_Terminal_Tegister_Resp:
-		dev.authcode = utils.GetStringWithGBK(getMsgBody(buff))
+		body := getMsgBody(buff)
+		dev.authcode = utils.GetStringWithGBK(body[3:])
 	case Cmd_Terminal_Param_Settings:
 
 	}
@@ -105,8 +107,6 @@ func (dev *TerminalInfo) Decode(buff []byte) {
 func (dev *TerminalInfo) GetResponse(buff []byte) (int, bool) {
 	msgId := getMsgId(buff[1:3])
 	msgBody := getMsgBody(buff)
-	fmt.Println(dev.sequnce)
-	fmt.Println(getSequenceInBuff(msgBody))
 	if dev.sequnce == getSequenceInBuff(msgBody) {
 		switch msgId {
 		case Cmd_Common_Resp:

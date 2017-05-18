@@ -88,6 +88,8 @@ func (dev *TerminalInfo) GenTerminalLogout() []byte {
 func (dev *TerminalInfo) GenTerminalAuth() []byte {
 	//消息体
 	body := utils.GetBytesWithGBK(dev.authcode)
+	fmt.Println(dev.authcode)
+	fmt.Println(body)
 	return dev.GenWholeMsg(body, Msg_Terminal_Auth)
 }
 

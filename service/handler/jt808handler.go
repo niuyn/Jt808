@@ -2,6 +2,7 @@ package handler
 
 import (
 	. "Jt808/tcp"
+	//	"encoding/hex"
 	"encoding/hex"
 	"fmt"
 	"jt808"
@@ -39,7 +40,7 @@ func HandleJT808Msg(session *Session) {
 	}
 	// 发送鉴权
 
-	//等待响应
+	////等待响应
 	for {
 		dev_auth := jt808Handler.GenTerminalAuth()
 		fmt.Println("dev_auth", hex.EncodeToString(dev_auth))
