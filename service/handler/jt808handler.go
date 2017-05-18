@@ -22,9 +22,10 @@ func HandleJT808Msg(session *Session) {
 	for {
 		conn.Write(dev_reg)
 		//等待响应
-		buff, err := session.ReadOnePacketWithFixDecoder(&jt808Handler, 10)
+		buff, err := session.ReadOnePacketWithFixDecoder(10)
 		if err != nil {
 			fmt.Println(err, " ", buff)
+			time.Sleep(5 * time.Second)
 			continue
 		}
 		// 获得注册包
@@ -45,7 +46,7 @@ func HandleJT808Msg(session *Session) {
 		dev_auth := jt808Handler.GenTerminalAuth()
 		fmt.Println("dev_auth", hex.EncodeToString(dev_auth))
 		conn.Write(dev_auth)
-		buff, err := session.ReadOnePacketWithFixDecoder(&jt808Handler, 10)
+		buff, err := session.ReadOnePacketWithFixDecoder(10)
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -54,6 +55,7 @@ func HandleJT808Msg(session *Session) {
 		if isOk && responseCode == 0 {
 			break
 		} else {
+			time.Sleep(5 * time.Second)
 			continue
 		}
 
@@ -61,12 +63,26 @@ func HandleJT808Msg(session *Session) {
 
 	// 发送心跳和gps
 	//d := jt808Handler.GetHeartBeatInterval()
-	timeChan := time.NewTicker(time.Second * 180).C
-	for {
-		// 发送心跳
-		dev_heartbeat := jt808Handler.GenTerminalHeartbeat()
-		conn.Write(dev_heartbeat)
-		<-timeChan
-	}
+	timeChanForHeartBeat := time.NewTicker(time.Second * time.Duration(jt808Handler.GetHeartBeatInterval())).C
+	go func() {
+		for {
+			// 发送心跳
+			dev_heartbeat := jt808Handler.GenTerminalHeartbeat()
+			conn.Write(dev_heartbeat)
+			<-timeChanForHeartBeat
+		}
+
+	}()
+
+	timeChanForGps := time.NewTicker(time.Second * time.Duration(jt808Handler.GetHeartBeatInterval())).C
+	go func() {
+		for {
+			// 发送心跳
+			dev_heartbeat := jt808Handler.GenTerminalGpsUp()
+			conn.Write(dev_heartbeat)
+			<-timeChanForGps
+		}
+
+	}()
 
 }
