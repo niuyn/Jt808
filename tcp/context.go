@@ -212,15 +212,40 @@ func (s *Session) MsutGet(timoutsec int) ([]byte, error) {
 }
 
 // 非阻塞写
-func (s *Session) Write() error {
-	//
-	return nil
+func (s *Session) Write(notify chan string) error {
+	var err error
+	for buff := range s.sendQuene.reqChan {
+		select {
+		case <-notify:
+			err = errors.New("conn may be broken")
+		default:
+			_, err = s.DirectWrite(buff)
+			if err != nil {
+				break
+			}
+		}
+
+	}
+	return err
 }
 func (s *Session) DirectWrite(buff []byte) (int, error) {
 	return s.Conn.Write(buff)
 }
 
+func (s *Session) WriteSessionBuffer(buff []byte) bool {
+	select {
+	case s.sendQuene.reqChan <- buff:
+		return true
+	default:
+		log.Printf(hex.EncodeToString(buff))
+	}
+	return false
+}
+
 //阻塞请求
 func (s *Session) ReqWithResponse(req []byte, timeoutsec int) ([]byte, error) {
 	return nil, nil
+}
+func (s *Session) Close() error {
+	return s.Conn.Close()
 }

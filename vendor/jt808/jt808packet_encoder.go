@@ -20,8 +20,8 @@ type TerminalInfo struct {
 }
 
 type TerminalGpsInfo struct {
-	terminalGps      TerminalGpsBody
-	terminalGpsExtra TerminalGpsExtraBody
+	TerminalGps      TerminalGpsBody
+	TerminalGpsExtra TerminalGpsExtraBody
 }
 
 type TerminalBatchGpsInfo struct {
@@ -50,6 +50,10 @@ func (dev *TerminalInfo) SetImei(imei string) *TerminalInfo {
 	dev.imei = imei
 	return dev
 }
+func (dev *TerminalInfo) SetGps(gpsinfo TerminalGpsInfo) *TerminalInfo {
+	dev.terminalGps = gpsinfo
+	return dev
+}
 
 // 终端注册
 func (dev *TerminalInfo) GenTerminalRegisterPacket() []byte {
@@ -62,12 +66,14 @@ func (dev *TerminalInfo) GenTerminalRegisterPacket() []byte {
 //终端位置信息上报
 func (dev *TerminalInfo) GenTerminalGpsUp() []byte {
 	//消息体
-	gpsBody := dev.terminalGps.terminalGps.GetBytes()
+	gpsBody := dev.terminalGps.TerminalGps.GetBytes()
 	if len(gpsBody) == 0 {
 		fmt.Println("time is empty")
 		return []byte{}
 	}
-	gpsBodyExtra := dev.terminalGps.terminalGpsExtra.GetBytes()
+	dev.terminalGps.TerminalGpsExtra.SetMsgBody(utils.EncodeCBCDFromString("0400000000EB16000C00B2898602B41116C096483900060089FFFFFFFF"))
+	dev.terminalGps.TerminalGpsExtra.SetMsgID(byte(0x01))
+	gpsBodyExtra := dev.terminalGps.TerminalGpsExtra.GetBytes()
 	body := append(gpsBody, gpsBodyExtra...)
 	return dev.GenWholeMsg(body, Msg_Terminal_Gps_Up)
 }
@@ -103,8 +109,8 @@ func (dev *TerminalInfo) GenTerminalBatchGpsUp() []byte {
 	//多个位置数据体
 	batchGps := []byte{}
 	for i := 0; i < gpsNum; i++ {
-		gpsBody := dev.terminalBatchGps.terminalMultiGps[i].terminalGps.GetBytes()
-		gpsBodyExtra := dev.terminalBatchGps.terminalMultiGps[i].terminalGpsExtra.GetBytes()
+		gpsBody := dev.terminalBatchGps.terminalMultiGps[i].TerminalGps.GetBytes()
+		gpsBodyExtra := dev.terminalBatchGps.terminalMultiGps[i].TerminalGpsExtra.GetBytes()
 		batchGps = append(batchGps, gpsBody...)
 		batchGps = append(batchGps, gpsBodyExtra...)
 	}
