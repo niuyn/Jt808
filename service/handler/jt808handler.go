@@ -51,7 +51,7 @@ func HandleJT808Msg(session *Session) bool {
 		for {
 			fmt.Println(hex.EncodeToString(dev_reg))
 			session.DirectWrite(dev_reg)
-			buff, err := session.MsutGet(10)
+			buff, err := session.MustGet(10)
 			if err != nil {
 				time.Sleep(10 * time.Second)
 				continue
@@ -67,10 +67,11 @@ func HandleJT808Msg(session *Session) bool {
 			}
 
 		}
+		//
 		for {
 			dev_auth := jt808Handler.GenTerminalAuth()
 			session.DirectWrite(dev_auth)
-			buff, err := session.MsutGet(10)
+			buff, err := session.MustGet(10)
 			if err != nil {
 				fmt.Println(err)
 				continue

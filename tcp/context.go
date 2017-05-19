@@ -201,7 +201,7 @@ func (s *Session) Read() error {
 }
 
 // 阻塞读
-func (s *Session) MsutGet(timoutsec int) ([]byte, error) {
+func (s *Session) MustGet(timoutsec int) ([]byte, error) {
 	select {
 	case ret := <-s.recevQuene.respChan:
 		return ret, nil
